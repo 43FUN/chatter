@@ -1,0 +1,63 @@
+version: '3.4'
+
+services:
+  nginx:
+    image: nginx:stable
+    container_name: chatter_nginx
+    environment:
+      - DOLLAR=$$
+    volumes:
+      - ./nginx/mysite.template:/etc/nginx/conf.d/mysite.template
+      - ../var/logs/nginx:/usr/src/app/var/logs/nginx
+      - type: bind
+        source: ../server
+        target: /usr/src/app/server
+        read_only: true
+    depends_on:
+      - server
+    links:
+      - server
+    ports:
+      - "80:80"
+    command: /bin/bash -c "envsubst < /etc/nginx/conf.d/mysite.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+  db:
+    image: postgres:10
+    container_name: chatter_db
+    env_file: ./.env
+    volumes:
+      - ../var/pgdata:/var/lib/postgresql/data
+
+  client:
+    build:
+      context: ../
+      dockerfile: docker/client/Dockerfile
+    container_name: chatter_client
+    command: yarn --cwd=../client watch
+    env_file: ./.env
+    volumes:
+      - ../client:/usr/src/app/client
+
+  server:
+    build:
+      context: ../
+      dockerfile: docker/server/Dockerfile
+    container_name: chatter_server
+    command: supervisord -c /usr/src/app/supervisord.conf --nodaemon
+    env_file: ./.env
+    entrypoint:
+      - ../docker/server/entrypoint.sh
+    environment:
+      - PYTHONUNBUFFERED=true
+    volumes:
+      - ../server:/usr/src/app/server
+      - ../var/logs/supervisor:/usr/src/app/var/logs/supervisor
+      - type: bind
+        source: ../client
+        target: /usr/src/app/client
+        read_only: true
+    depends_on:
+      - db
+      - client
+    links:
+      - db

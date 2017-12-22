@@ -1,0 +1,9 @@
+aiohttp==2.3.6
+aiohttp-jinja2==0.14.0
+aiopg==0.13.1
+psycopg2==2.7.3.2
+SQLAlchemy==1.1.15
+uvloop==0.9.1
+ipython
+aiohttp_debugtoolbar==0.4.1
+gunicorn
