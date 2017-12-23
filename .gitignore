@@ -4,8 +4,6 @@ __pycache__/
 
 var/
 
-docker/.env
-
 client/node_modules/
 client/public/
 client/yarn-error.log
